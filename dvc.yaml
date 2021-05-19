@@ -1,0 +1,15 @@
+stages:
+  convert_data:
+    cmd: scripts/convert_all_data.sh
+    deps:
+    - data/raw/combined_data_1.txt
+    - data/raw/combined_data_2.txt
+    - data/raw/combined_data_3.txt
+    - data/raw/combined_data_4.txt
+    - scripts/convert_all_data.sh
+    - scripts/convert_data.py
+    outs:
+    - data/clean/data_1.csv
+    - data/clean/data_2.csv
+    - data/clean/data_3.csv
+    - data/clean/data_4.csv

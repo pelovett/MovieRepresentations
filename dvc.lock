@@ -1,0 +1,36 @@
+schema: '2.0'
+stages:
+  convert_data:
+    cmd: scripts/convert_all_data.sh
+    deps:
+    - path: data/raw/combined_data_1.txt
+      md5: f1a987bffc5d7642a4a973f6b43556f1
+      size: 495032008
+    - path: data/raw/combined_data_2.txt
+      md5: 73355b1172eb264b05171e2212c3a547
+      size: 555207357
+    - path: data/raw/combined_data_3.txt
+      md5: 0829665bf28144e70e5b99588db43f05
+      size: 465157779
+    - path: data/raw/combined_data_4.txt
+      md5: 3e5940147d559bcc96619955202f40b8
+      size: 552537802
+    - path: scripts/convert_all_data.sh
+      md5: f92685ddb956875a3ac5c67979ab51d3
+      size: 353
+    - path: scripts/convert_data.py
+      md5: 90c6d8adbdf91e50e64a3a5ce79539c3
+      size: 1030
+    outs:
+    - path: data/clean/data_1.csv
+      md5: 0813c94d50cc9d775d90363055cdec95
+      size: 826376582
+    - path: data/clean/data_2.csv
+      md5: aa0179a82c53a0a3f58a41600b309e22
+      size: 932865365
+    - path: data/clean/data_3.csv
+      md5: 3a9ce1192f7c515f00ef1d7232033d0d
+      size: 800403455
+    - path: data/clean/data_4.csv
+      md5: b79ca92691f7ebcc58d6d8c07edfb1a3
+      size: 955219826
