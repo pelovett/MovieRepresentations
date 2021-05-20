@@ -1,0 +1,4 @@
+prepare:
+  seed: 123
+  train_split: 0.7
+  val_split: 0.2

@@ -16,9 +16,9 @@ stages:
       md5: 3e5940147d559bcc96619955202f40b8
       size: 552537802
     - path: scripts/convert_all_data.sh
-      md5: f92685ddb956875a3ac5c67979ab51d3
-      size: 353
-    - path: scripts/convert_data.py
+      md5: f075243002dc765bbd47c2f4b4b29ec4
+      size: 369
+    - path: scripts/convert_raw_data.py
       md5: 90c6d8adbdf91e50e64a3a5ce79539c3
       size: 1030
     outs:
@@ -34,3 +34,27 @@ stages:
     - path: data/clean/data_4.csv
       md5: b79ca92691f7ebcc58d6d8c07edfb1a3
       size: 955219826
+  split_data:
+    cmd: python3 scripts/transform_split_data.py data/clean/data_1.csv
+    deps:
+    - path: data/clean/data_1.csv
+      md5: 0813c94d50cc9d775d90363055cdec95
+      size: 826376582
+    - path: scripts/transform_split_data.py
+      md5: 428f019c329c680fde50fea7a6c655b7
+      size: 4166
+    params:
+      params.yaml:
+        prepare.seed: 123
+        prepare.train_split: 0.7
+        prepare.val_split: 0.2
+    outs:
+    - path: data/clean/test_data.csv
+      md5: 6238b22ce780da61e0c686f152c08951
+      size: 12526658
+    - path: data/clean/train_data.csv
+      md5: 8fd276956bb5a5d9d8ba053c89b7f170
+      size: 87944770
+    - path: data/clean/val_data.csv
+      md5: 37a83885f80e9f1f08b040fec457463a
+      size: 25057244
