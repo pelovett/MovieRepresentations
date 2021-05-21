@@ -101,11 +101,11 @@ def split_transform_file(path_to_file: str, prepare_params: dict):
     print(f'Movies with no test data: {no_test}')
 
     print('\nSaving Training data to file...')
-    train_data.to_csv('data/clean/train_data.csv', sep='\t')
+    train_data.to_csv('data/clean/train_data.csv', sep='\t', index=False)
     print('Saving Validation data...')
-    val_data.to_csv('data/clean/val_data.csv', sep='\t')
+    val_data.to_csv('data/clean/val_data.csv', sep='\t', index=False)
     print('Saving Test data...')
-    test_data.to_csv('data/clean/test_data.csv', sep='\t')
+    test_data.to_csv('data/clean/test_data.csv', sep='\t', index=False)
     print('Saving complete. Exiting now.')
 
 
