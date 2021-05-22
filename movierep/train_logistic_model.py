@@ -3,6 +3,7 @@ from typing import final
 from pandas.core.frame import DataFrame
 from sklearn.linear_model import SGDClassifier
 from sklearn.dummy import DummyClassifier
+from sklearn.metrics import f1_score
 from scipy.sparse import csr_matrix
 from joblib import dump
 import numpy as np
@@ -29,22 +30,20 @@ def convert_to_int_list(dataframe: pd.Series) -> "list[list[int]]":
 
 
 def create_predictor(main_matrix, index):
+    # Convert to sparse matrix to save memory
+    x = csr_matrix(
+        np.concatenate([main_matrix[:, :index], main_matrix[:, index + 1 :]], axis=1)
+    )
     y = main_matrix[:, index]
     if y.sum() < 15:
-        logging.info(f"Model {index} using dummy classifier")
-        return (index, DummyClassifier(strategy="constant", constant=0))
+        model = DummyClassifier(strategy="most_frequent").fit(x, y)
+        model_name = "dummy classifier"
     else:
-        # Convert to sparse matrix to save memory
-        x = csr_matrix(
-            np.concatenate(
-                [main_matrix[:, :index], main_matrix[:, index + 1 :]], axis=1
-            )
-        )
         model = SGDClassifier(loss="log", random_state=RANDOM_SEED).fit(x, y)
-        logging.info(
-            f"Model {index} using logistic regression | score: {model.score(x, y):.4}"
-        )
-        return (index, model)
+        model_name = "logistic regression"
+    score = f1_score(y, model.predict(x), zero_division=1)
+    logging.info(f"Model {index} using {model_name} | f1 score: {score:.4}")
+    return (index, model)
 
 
 def load_dataframe(data_dir):
@@ -67,12 +66,16 @@ if __name__ == "__main__":
     with open("params.yaml", "r") as raw_yaml:
         params = yaml.safe_load(raw_yaml)
     RANDOM_SEED = params["training"]["seed"]
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(
+        format="%(asctime)-15s | %(message)s",
+        level=logging.DEBUG,
+        datefmt="%m/%d/%Y %I:%M:%S %p",
+    )
 
     data_frame = load_dataframe(sys.argv[1])
 
     thread_func = lambda x: create_predictor(data_frame, x)
-    with ThreadPoolExecutor(2) as thread_pool:
+    with ThreadPoolExecutor() as thread_pool:
         logging.info("Beginning training process")
         models = thread_pool.map(
             thread_func,
