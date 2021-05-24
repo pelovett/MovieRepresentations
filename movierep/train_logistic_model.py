@@ -1,6 +1,3 @@
-from re import I
-from typing import final
-from pandas.core.frame import DataFrame
 from sklearn.linear_model import SGDClassifier
 from sklearn.dummy import DummyClassifier
 from sklearn.metrics import f1_score
@@ -9,7 +6,8 @@ from joblib import dump
 import numpy as np
 import pandas as pd
 
-from concurrent.futures import ThreadPoolExecutor, wait
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
 import logging
 import sys
 import os
@@ -74,14 +72,16 @@ if __name__ == "__main__":
 
     data_frame = load_dataframe(sys.argv[1])
 
+    models = []
     thread_func = lambda x: create_predictor(data_frame, x)
     with ThreadPoolExecutor() as thread_pool:
         logging.info("Beginning training process")
         models = thread_pool.map(
             thread_func,
-            range(data_frame.shape[1]),
+            range(2),  # data_frame.shape[1]),
         )
-        models = [_ for _ in models].sort(key=lambda x: x[0])
+        models = list(models)
+        models.sort(key=lambda x: x[0])
 
     # Save models to checkpoint file
     save_dir = sys.argv[2]
@@ -90,6 +90,15 @@ if __name__ == "__main__":
     while os.path.isfile(os.path.join(save_dir, save_file_name)):
         vers_num += 1
         save_file_name = f"logistic_regression_models_{vers_num}"
+
     logging.info(f"Saving models to file: {os.path.join(save_dir, save_file_name)}")
-    dump(models, os.path.join(save_dir, save_file_name))
+    model_dict = dict()
+    model_dict["creation_timestamp"] = str(datetime.now())
+    model_dict["models"] = [x for (_, x) in models]
+    model_dict["index"] = dict()
+    with open("data/raw/movie_titles.csv", "r", encoding="ISO-8859-1") as in_file:
+        for line in in_file:
+            cur = line.strip().split(",")
+            model_dict["index"][int(cur[0]) + 1] = (cur[1], cur[2])
+    dump(model_dict, os.path.join(save_dir, save_file_name))
     logging.info("Saving complete. Exiting...")
