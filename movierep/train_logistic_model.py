@@ -78,7 +78,7 @@ if __name__ == "__main__":
         logging.info("Beginning training process")
         models = thread_pool.map(
             thread_func,
-            range(2),  # data_frame.shape[1]),
+            range(data_frame.shape[1]),
         )
         models = list(models)
         models.sort(key=lambda x: x[0])
