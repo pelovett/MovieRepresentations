@@ -6,3 +6,5 @@ prepare:
 
 training:
   seed: 123
+  pca:
+    k: 300
