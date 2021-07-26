@@ -1,12 +1,9 @@
-from sklearn.linear_model import SGDClassifier
-from sklearn.dummy import DummyClassifier
 from sklearn.metrics import f1_score
-from scipy.sparse import csr_matrix
+from sklearn.decomposition import PCA
 from joblib import dump
 import numpy as np
 import pandas as pd
 
-from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 import logging
 import sys
@@ -27,28 +24,16 @@ def convert_to_int_list(dataframe: pd.Series) -> "list[list[int]]":
     return result_list
 
 
-def create_predictor(main_matrix, index):
-    # Convert to sparse matrix to save memory
-    x = csr_matrix(
-        np.concatenate([main_matrix[:, :index], main_matrix[:, index + 1 :]], axis=1)
-    )
-    y = main_matrix[:, index]
-    if y.sum() < 15:
-        model = DummyClassifier(strategy="most_frequent").fit(x, y)
-        model_name = "dummy classifier"
-    else:
-        model = SGDClassifier(loss="log", random_state=RANDOM_SEED).fit(x, y)
-        model_name = "logistic regression"
-    score = f1_score(y, model.predict(x), zero_division=1)
-    logging.info(f"Model {index} using {model_name} | f1 score: {score:.4}")
-    return (index, model)
+def calc_projection_matrix(main_matrix, k):
+    matrix = PCA(n_components=k).fit(main_matrix)
+    explained = matrix.explained_variance_ratio_
+    logging.info(f"Explained variance ratios for first 50: {explained[:50]}...")
 
 
 def load_dataframe(data_dir):
     global RANDOM_SEED
     # Parse training data
     train_df = pd.read_csv(os.path.join(data_dir, "train_data.csv"), sep="\t")
-    train_cust = train_df["cust_id"].to_numpy()
     temp_train_x = convert_to_int_list(train_df["movies"])
     max_movie_id = max([max(_) for _ in temp_train_x])
     logging.info(f"Data set size: {(len(temp_train_x), max_movie_id+1)}")
@@ -71,30 +56,22 @@ if __name__ == "__main__":
     )
 
     data_frame = load_dataframe(sys.argv[1])
-
-    models = []
-    thread_func = lambda x: create_predictor(data_frame, x)
-    with ThreadPoolExecutor() as thread_pool:
-        logging.info("Beginning training process")
-        models = thread_pool.map(
-            thread_func,
-            range(data_frame.shape[1]),
-        )
-        models = list(models)
-        models.sort(key=lambda x: x[0])
+    projection_matrix = calc_projection_matrix(
+        data_frame["cust_id"].to_numpy(), k=params["training"]["pca"]["k"]
+    )
 
     # Save models to checkpoint file
     save_dir = sys.argv[2]
     vers_num = 1
-    save_file_name = f"logistic_regression_models_{vers_num}"
+    save_file_name = f"pca_matrix_{vers_num}"
     while os.path.isfile(os.path.join(save_dir, save_file_name)):
         vers_num += 1
-        save_file_name = f"logistic_regression_models_{vers_num}"
+        save_file_name = f"pca_matrix__{vers_num}"
 
-    logging.info(f"Saving models to file: {os.path.join(save_dir, save_file_name)}")
+    logging.info(f"Saving matrix to file: {os.path.join(save_dir, save_file_name)}")
     model_dict = dict()
     model_dict["creation_timestamp"] = str(datetime.now())
-    model_dict["models"] = [x for (_, x) in models]
+    model_dict["pca_matrix"] = projection_matrix
     model_dict["index"] = dict()
     with open("data/raw/movie_titles.csv", "r", encoding="ISO-8859-1") as in_file:
         for line in in_file:
